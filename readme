@@ -1,0 +1,16 @@
+Music Bot for Discord
+
+Can play songs from YouTube or SoundCloud through the discord voice chat.
+
+Coded from scratch by Kidus Yohannes.
+
+| How To Use 
+
+First run the script 'launch.py'. Make sure the first argument you pass is your bot's token.
+
+Then invite your bot to the desired server and type any of the following commands:
+
+- /play <link>
+Plays the song from the given <link>. This link should either be a YT or SC link.
+
+...
