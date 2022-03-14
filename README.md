@@ -8,21 +8,44 @@ Currently the bot can only play music through YT links.
 
 Here is a list of what still needs to be implemented and improved:
 
-* Play music through SC links
-* Let the user search for music (YT and SC)
-* Download music faster or find a way to stream it (this has been difficult to figure out)
+* Play music through SC links.
+* Let the user search for music (YT and SC).
+* Queue up songs to play.
+* Download music faster or find a way to stream it (this has been difficult to figure out).
 
 ## Commands
 
-/play
+**/play** &lt;link&gt;
 
-/disconnect
+* Plays the song from the given link.
+* This link should either be a YT or SC link. For example: https://youtu.be/dQw4w9WgXcQ.
 
-/pause
+**/disconnect**
+* Disconnects the bot from the voice channel.
 
-/resume
+**/pause**
+* Pauses the music.
 
-/stop
+**/resume**
+* Resumes the music.
+
+**/stop**
+* Stops the music.
+
+### Not yet implemented
+
+**/skip**
+* Skips the current song and starts playing the next one in queue.
+
+**/queue**
+* Displays the songs currently in queue.
+
+**/command_prefix** &lt;char&gt;
+* Changes the command prefix to be the given character instead.
+
+**/help**
+* Displays a list of commands.
+
 
 ## Getting Started
 
