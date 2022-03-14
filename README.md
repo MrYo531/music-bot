@@ -1,6 +1,6 @@
 # Discord Music Bot
 
-A simple discord bot that plays songs from YouTube or SoundCloud through the voice channel.
+A simple Discord bot that plays songs from YouTube or SoundCloud through the voice channel.
 
 ## Features
 
@@ -106,7 +106,7 @@ cd C:\Users\Kidus\Downloads\music-bot-main\
 python3 launch.py <token>
 ```
 
-And that's it. In discord, join a voice channel and type the following command to play a song:
+And that's it. In Discord, join a voice channel and type the following command in a text channel to play a song:
 ```
 /play https://youtu.be/dQw4w9WgXcQ
 ```

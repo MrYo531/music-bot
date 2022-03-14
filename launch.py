@@ -20,6 +20,8 @@ stop_abbrs = ['s']
 @bot.command()
 async def play(ctx, arg):
     await joinChannel(ctx)
+    if not bot.voice_clients: # bot is not connected to voice channel
+        return
     downloadMusic(arg)
     await playMusic(ctx)
 
@@ -55,9 +57,6 @@ async def leaveChannel(ctx):
         await ctx.guild.voice_client.disconnect()
 
 async def playMusic(ctx):
-    if not bot.voice_clients: # bot is not connected to voice channel
-        return
-
     vc = ctx.guild.voice_client
     audio = FFmpegPCMAudio('song.mp3')
     if not vc.is_playing():
