@@ -67,15 +67,11 @@ async def pauseMusic(ctx):
     vc = ctx.guild.voice_client
     if vc.is_playing():
         vc.pause()
-    else:
-        await ctx.send('There is no music playing right now.')
 
 async def resumeMusic(ctx):
     vc = ctx.guild.voice_client
     if vc.is_paused():
         vc.resume()
-    else:
-        await ctx.send('There is no music paused right now.')
 
 async def stopMusic(ctx):
     vc = ctx.guild.voice_client
