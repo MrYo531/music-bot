@@ -65,18 +65,7 @@ Here is a list of what still needs to be implemented and improved:
 
 ## Running the Bot
 
-### Dependencies
-
-* Python 3.10.2
-* discord.py[voice]
-* FFmpeg
-* yt_dlp
-
-All of the dependent libraries are already included in the python virtual environment, 'bot-env'. That way, nothing additional is required other than downloading this repo.
-
----
-
-These instructions assume you're running on Windows and that you've already created a bot account.
+These instructions assume you're using Windows and that you've already created a bot account.
 
 If you haven't, follow [these](https://discordpy.readthedocs.io/en/stable/discord.html#) instructions for creating a bot and inviting it to your server.
 
@@ -87,23 +76,29 @@ The only required bot permissions are:
 * Connect [Voice]
 * Speak [Voice]
 
+### Dependencies
+
+* Python 3.10.2
+* FFmpeg
+* discord.py[voice]
+* yt_dlp
+
+You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
+
+The python libaries (discord.py and yt_dlp) are already installed in the python virtual environment, 'bot-env'. That way, you can follow these instructions without having to install them yourself.
+
 ### Steps
 
 * Download this repo as a .zip and extract it to a location on your computer
 
-* Open up PowerShell and navigate to where you extracted the folder
+* Open up Command Prompt and navigate to where you extracted the folder
 ```
 cd C:\Users\Kidus\Downloads\music-bot-main\
 ```
 
-* Activate the virtual environment
+* Run the script using the python executable from the virtual environment and passing your bot token as the first argument
 ```
-& .\bot-env\Scripts\Activate.ps1
-```
-
-* Run the script while passing your bot token as the first argument
-```
-python3 launch.py <token>
+bot-env\Scripts\python.exe run.py <token>
 ```
 
 And that's it. In Discord, join a voice channel and type the following command in a text channel to play a song:
