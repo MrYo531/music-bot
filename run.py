@@ -93,7 +93,6 @@ def downloadMusic(url):
     for file in os.listdir("./"):
         if file.endswith(".mp3"):
             os.replace(file, "song.mp3")
-            break
 
 # Check for and expand any abbreviated commands
 async def expandAbbrCommand(message):

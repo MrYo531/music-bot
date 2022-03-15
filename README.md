@@ -14,6 +14,7 @@ Here is a list of what still needs to be implemented and improved:
 * Let the user search for music instead of passing a link
 * Queue up songs to play
 * Register new command abbreviations
+* Test that it works on multiple servers simultaneously 
 * Download music faster or find a way to stream it directly (this has been difficult to figure out)
 
 ## Commands
