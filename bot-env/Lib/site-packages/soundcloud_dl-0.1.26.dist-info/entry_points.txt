@@ -1,0 +1,4 @@
+[console_scripts]
+sc-dl = soundcloud_dl:main
+soundcloud-dl = soundcloud_dl:main
+

@@ -6,23 +6,22 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 Commands can be abbreviated. For example: /p is the same as /play.
 
-Currently, the bot can only play music through YT links.
-
 Here is a list of what still needs to be implemented and improved:
 
-* Play music through SC links
-* Let the user search for music instead of passing a link
-* Queue up songs to play
+* Store list of already downloaded songs. Search list before downloading song.
+* Search for music using SC
+* fast forward / rewind command, help command
 * Register new command abbreviations
 * Test that it works on multiple servers simultaneously 
 * Download music faster or find a way to stream it directly (this has been difficult to figure out)
+* Support on Linux/Mac OS (reconfirm installation instructions are accurate)
 
 ## Commands
 
-**/play** &lt;link&gt;
+**/play** &lt;search term or link&gt;
 
-* Plays the song from the given link
-* This link should either be a YT or SC link
+* Plays the song from the given search term or link
+* Searchs for songs on YT and supports both YT or SC links
 * Can also be called with: 
     * **/p**
 
@@ -48,15 +47,29 @@ Here is a list of what still needs to be implemented and improved:
 **/stop**
 * Stops the music
 * Can also be called with: 
-    * **/s**
+    * **/st**
 
-### Not yet implemented
-
-**/skip**
-* Skips the current song and starts playing the next one in queue
+**/now_playing**
+* Displays the song that is currently playing
+    * **/np**
 
 **/queue**
 * Displays the songs currently in queue
+    * **/q**
+
+**/skip** &lt;optional search term or link&gt;
+* Skips the current song and starts playing the next one in queue
+* If a search term or link is provided, then that is the next song that is played
+    * **/sk**
+    * **/pskip**
+    * **/playskip**
+
+**/move** &lt;queue position&gt; &lt;queue position&gt;
+* Moves the song at the specified position (first argument) to the specified position (second argument) in the queue
+    * **/mv**
+    * **/m**
+
+### Not yet implemented    
 
 **/command_prefix** &lt;char&gt;
 * Changes the command prefix to be the given character instead
@@ -83,10 +96,12 @@ The only required bot permissions are:
 * FFmpeg
 * discord.py[voice]
 * yt_dlp
+* soundcloud-dl
+* youtube-search
 
 You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
 
-The python libaries (discord.py and yt_dlp) are already installed in the python virtual environment, 'bot-env'. That way, you can follow these instructions without having to install them yourself.
+The python libaries are already installed in the python virtual environment, 'bot-env'. That way, you can follow these instructions without having to manually install them yourself.
 
 ### Steps
 
@@ -105,6 +120,8 @@ bot-env\Scripts\python.exe run.py <token>
 And that's it. In Discord, join a voice channel and type the following command in a text channel to play a song:
 ```
 /play https://youtu.be/dQw4w9WgXcQ
+or
+/play never gonna give you up
 ```
 
 ## Author
@@ -113,9 +130,13 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 
 ## Version History
 
-* 0.1
+* 0.1 - 03/14/2022
     * Initial Release
     * Basic functionality implemented
+* 0.2 - 06/27/2022
+    * Added SoundCloud link support
+    * Added YT search capabilities
+    * Added queue support and related commands (now playing, skip, move, etc...)
 
 ## License
 
