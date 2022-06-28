@@ -117,10 +117,11 @@ cd C:\Users\Kidus\Downloads\music-bot-main\
 bot-env\Scripts\python.exe run.py <token>
 ```
 
-And that's it. In Discord, join a voice channel and type the following command in a text channel to play a song:
+And that's it. In Discord, join a voice channel and type either command in a text channel to play a song:
 ```
 /play https://youtu.be/dQw4w9WgXcQ
-or
+```
+```
 /play never gonna give you up
 ```
 
