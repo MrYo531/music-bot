@@ -138,7 +138,10 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 * 0.2 - 06/27/2022
     * Added SoundCloud link support
     * Added YT search capabilities
-    * Added queue support and related commands (now playing, skip, move, remove, etc...)
+    * Added queue support and related commands (now playing, skip, move, etc...)
+* 0.3 - 07/06/2022
+    * Added functionality to check for downloaded songs
+    * Added remove command
 
 ## License
 
