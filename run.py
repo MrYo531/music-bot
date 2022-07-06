@@ -4,28 +4,36 @@ from discord.ext import commands
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from yt_dlp import YoutubeDL
 import os
-from youtube_search import YoutubeSearch
+from youtubesearchpython import VideosSearch, Video, ResultMode
 import re
 import asyncio
+import urllib
 
 bot = commands.Bot(command_prefix='/') # all commands should start with '/'
 
 # all possible commands and their abbreviations
-command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move']
+command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove']
 play_abbrs = ['p']
 disconnect_abbrs = ['dc', 'leave', 'l']
 pause_abbrs = ['pp', 'ps']
-resume_abbrs = ['r', 'rs']
+resume_abbrs = ['rs']
 stop_abbrs = ['st']
 now_playing_abbrs = ['np']
 queue_abbrs = ['q']
 skip_abbrs = ['sk', 'pskip', 'play_skip']
 move_abbrs = ['mv', 'm']
+remove_abbrs = ['rm']
 
 # keep track of the songs to play next
 song_queue = []
 current_song = ""
 stopped = False
+
+downloaded_songs = set()
+song_dir = "songs"
+for song in os.listdir(song_dir):
+    downloaded_songs.add(song[:-4])
+#print(downloaded_songs)
 
 @bot.command()
 async def play(ctx, *, arg):
@@ -35,14 +43,17 @@ async def play(ctx, *, arg):
 
     song_id, song_title = await get_song_info(arg)
 
-    #print(song_id, "\n", song_title)
-    if not ctx.voice_client.is_playing(): # bot is not playing music yet
-        await playMusic(ctx, song_id, song_title)
-        global stopped
-        stopped = False
-    else: # bot is already playing music, so just queue the song
-        song_queue.append((song_id, song_title))
-        await ctx.send(f"**added to queue:** {song_title}")
+    if song_id:
+        #print(song_id, "\n", song_title)
+        if not ctx.voice_client.is_playing(): # bot is not playing music yet
+            await playMusic(ctx, song_id, song_title)
+            global stopped
+            stopped = False
+        else: # bot is already playing music, so just queue the song
+            song_queue.append((song_id, song_title))
+            await ctx.send(f"**added to queue:** {song_title}")
+    else:
+        await ctx.send("Song is too large to download.")
 
 @bot.command()
 async def disconnect(ctx):
@@ -106,6 +117,13 @@ async def move(ctx, q_pos_src, q_pos_dst):
         song_queue.insert(q_pos_dst, (song_id, song_title))
         await ctx.send(f"**moved song to position {q_pos_dst}:** {song_title}")
 
+@bot.command()
+async def remove(ctx, q_pos):
+    q_pos = int(q_pos)
+    if q_pos < len(song_queue) and q_pos >= 0: # sanitize input
+        _, song_title = song_queue.pop(q_pos)
+        await ctx.send(f"**removed song at position {q_pos}:** {song_title}")
+
 async def joinChannel(ctx):
     if ctx.author.voice: # user is in voice channel
         channel = ctx.author.voice.channel
@@ -122,8 +140,8 @@ async def get_song_info(arg):
     if arg.startswith(r"https://"): # url link
         song_url = arg
     else: # search term
-        search_results = YoutubeSearch(str(arg), max_results=1).to_dict()
-        song_url = r"https://youtu.be" + search_results[0]["url_suffix"]
+        search_results = VideosSearch(str(arg), limit=1).result() # only retrieving 1 video sometimes crashes
+        song_url = search_results['result'][0]['link']
 
     song_id, song_title = downloadMusic(song_url)
     return song_id, song_title
@@ -145,26 +163,47 @@ async def playMusic(ctx, video_id, video_title):
         await now_playing(ctx)
 
 def downloadMusic(url):
+    def download_filter(info, *, incomplete):
+        duration = info.get('duration')
+        if duration and duration > (600): # 10 minutes cap
+            return 'The video/song is too long'
+
     ytdl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '320',
-        }]
+        }],
+        'match_filter': download_filter
     }
 
-    with YoutubeDL(ytdl_opts) as ytdl: # works with SC links too apparently 
-        ytdl.download([url])
+    song_id = song_title = ""
+    if not 'soundcloud' in url:
+        song_results = Video.getInfo(url, mode = ResultMode.json)
+        song_id = song_results['id']
+        song_title = song_results['title']
+        #print("video info: ", song_id, song_title)
+    else:
+        res = urllib.request.urlopen(url).read().decode("utf8")
+        song_id = re.findall(r'(?<=:)(\d*)(?=")', res)[0]
+        song_title = re.findall(r'(?<=:title" content=")(.*?)(?=")', res)[0]
+        #print(song_id, song_title)
+    
+    if not song_id in downloaded_songs: # download song if not already downloaded
+        downloaded_songs.add(song_id)
 
-    if not os.path.exists("songs"):
-        os.makedirs("songs")
+        with YoutubeDL(ytdl_opts) as ytdl: # works with SC links too apparently 
+            error_code = ytdl.download([url])
 
-    for file in os.listdir("./"):
-        if file.endswith(".mp3"):
-            song_id = re.findall(r"(?<=\[).+?(?=\])", file)[-1]
-            song_title = file[:-(len(f" [{song_id}].mp3"))]
-            os.replace(file, rf"songs/{song_id}.mp3")
+        if not os.path.exists("songs"):
+            os.makedirs("songs")
+
+        for file in os.listdir("./"):
+            if file.endswith(".mp3"):
+                song_id = re.findall(r"(?<=\[).+?(?=\])", file)[-1]
+                song_title = file[:-(len(f" [{song_id}].mp3"))]
+                os.replace(file, rf"songs/{song_id}.mp3")
 
     return song_id, song_title
 

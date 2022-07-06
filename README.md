@@ -6,9 +6,10 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 Commands can be abbreviated. For example: /p is the same as /play.
 
+A song that has already been downloaded will be played right away instead of waiting to downloading it again.
+
 Here is a list of what still needs to be implemented and improved:
 
-* Store list of already downloaded songs. Search list before downloading song.
 * Search for music using SC
 * fast forward / rewind command, help command
 * Register new command abbreviations
@@ -41,7 +42,6 @@ Here is a list of what still needs to be implemented and improved:
 **/resume**
 * Resumes the music
 * Can also be called with: 
-    * **/r**
     * **/rs**
 
 **/stop**
@@ -68,6 +68,10 @@ Here is a list of what still needs to be implemented and improved:
 * Moves the song at the specified position (first argument) to the specified position (second argument) in the queue
     * **/mv**
     * **/m**
+
+**/remove** &lt;queue position&gt;
+* Removes the song at the specified position in the queue
+    * **/rm**
 
 ### Not yet implemented    
 
@@ -97,7 +101,7 @@ The only required bot permissions are:
 * discord.py[voice]
 * yt_dlp
 * soundcloud-dl
-* youtube-search
+* youtube-search-python
 
 You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
 
@@ -117,12 +121,9 @@ cd C:\Users\Kidus\Downloads\music-bot-main\
 bot-env\Scripts\python.exe run.py <token>
 ```
 
-And that's it. In Discord, join a voice channel and type either command in a text channel to play a song:
+And that's it. In Discord, join a voice channel and type the following command in a text channel to play a song:
 ```
 /play https://youtu.be/dQw4w9WgXcQ
-```
-```
-/play never gonna give you up
 ```
 
 ## Author
@@ -133,11 +134,11 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 
 * 0.1 - 03/14/2022
     * Initial Release
-    * Basic functionality implemented
+    * Basic functionality implemented (play, pause, resume, stop, dc)
 * 0.2 - 06/27/2022
     * Added SoundCloud link support
     * Added YT search capabilities
-    * Added queue support and related commands (now playing, skip, move, etc...)
+    * Added queue support and related commands (now playing, skip, move, remove, etc...)
 
 ## License
 
