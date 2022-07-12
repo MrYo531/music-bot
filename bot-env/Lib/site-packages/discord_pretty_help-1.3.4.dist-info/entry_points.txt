@@ -1,0 +1,3 @@
+[console_scripts]
+test=tests.test_discord_pretty_help:run
+

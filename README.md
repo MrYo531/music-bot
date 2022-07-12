@@ -4,6 +4,8 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 ## Features
 
+Can search for songs on YT.
+
 Commands can be abbreviated. For example: /p is the same as /play.
 
 A song that has already been downloaded will be played right away instead of waiting to downloading it again.
@@ -12,7 +14,8 @@ Here is a list of what still needs to be implemented and improved:
 
 * Search for music using SC
 * fast forward / rewind command, help command
-* Register new command abbreviations
+* Register new command prefix (save and load to config file)
+* Register new command abbreviations (save and load to config file)
 * Test that it works on multiple servers simultaneously 
 * Download music faster or find a way to stream it directly (this has been difficult to figure out)
 * Support on Linux/Mac OS (reconfirm installation instructions are accurate)
@@ -30,13 +33,10 @@ Here is a list of what still needs to be implemented and improved:
 * Disconnects the bot from the voice channel
 * Can also be called with: 
     * **/dc**
-    * **/leave**
-    * **/l**
 
 **/pause**
 * Pauses the music
 * Can also be called with: 
-    * **/pp**
     * **/ps**
 
 **/resume**
@@ -61,8 +61,6 @@ Here is a list of what still needs to be implemented and improved:
 * Skips the current song and starts playing the next one in queue
 * If a search term or link is provided, then that is the next song that is played
     * **/sk**
-    * **/pskip**
-    * **/playskip**
 
 **/move** &lt;queue position&gt; &lt;queue position&gt;
 * Moves the song at the specified position (first argument) to the specified position (second argument) in the queue
@@ -73,13 +71,16 @@ Here is a list of what still needs to be implemented and improved:
 * Removes the song at the specified position in the queue
     * **/rm**
 
+**/help**
+* Displays a list of commands
+
 ### Not yet implemented    
 
 **/command_prefix** &lt;char&gt;
 * Changes the command prefix to be the given character instead
 
-**/help**
-* Displays a list of commands
+**/command_abbrev** &lt;command&gt; &lt;abbreviation&gt;
+* Adds the specified abbreviation for the specified command
 
 ## Running the Bot
 
@@ -102,6 +103,7 @@ The only required bot permissions are:
 * yt_dlp
 * soundcloud-dl
 * youtube-search-python
+* discord-pretty-help
 
 You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
 
@@ -142,6 +144,9 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 * 0.3 - 07/06/2022
     * Added functionality to check for downloaded songs
     * Added remove command
+* 0.4 - 07/11/2022
+    * Added help method with command descriptions
+    * Refactored code to use classes/cogs
 
 ## License
 
