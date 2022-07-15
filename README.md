@@ -4,11 +4,13 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 ## Features
 
-Can search for songs on YT.
+Can search for songs on YT or SoundCloud.
 
 Commands can be abbreviated. For example: /p is the same as /play.
 
 A song that has already been downloaded will be played right away instead of waiting to downloading it again.
+
+Can update the command prefix.
 
 Here is a list of what still needs to be implemented and improved:
 
@@ -62,7 +64,7 @@ Here is a list of what still needs to be implemented and improved:
 * If a search term or link is provided, then that is the next song that is played
     * **/sk**
 
-**/move** &lt;queue position&gt; &lt;queue position&gt;
+**/move** &lt;queue position src&gt; &lt;queue position dst&gt;
 * Moves the song at the specified position (first argument) to the specified position (second argument) in the queue
     * **/mv**
     * **/m**
@@ -74,10 +76,10 @@ Here is a list of what still needs to be implemented and improved:
 **/help**
 * Displays a list of commands
 
-### Not yet implemented    
-
 **/command_prefix** &lt;char&gt;
 * Changes the command prefix to be the given character instead
+
+### Not yet implemented    
 
 **/command_abbrev** &lt;command&gt; &lt;abbreviation&gt;
 * Adds the specified abbreviation for the specified command

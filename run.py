@@ -10,7 +10,14 @@ import re
 import asyncio
 import urllib
 
-command_prefix = '/' # all commands should start with '/'
+with open('.config', 'r') as file:
+    config = file.readlines()
+
+# load command_prefix from .config file
+command_prefix = config[0][0]
+# or hard code
+#command_prefix = '/' # all commands should start with '/'
+
 ending_note = "Check the github for a list of all the commands and their descriptions:\nhttps://github.com/MrYo531/music-bot"
 help_command = PrettyHelp(color=Color.blue(), ending_note=ending_note, index_title='Commands')
 menu = DefaultMenu(delete_after_timeout=True)
@@ -25,8 +32,9 @@ stop_abbrs = ['st']
 now_playing_abbrs = ['np']
 queue_abbrs = ['q']
 skip_abbrs = ['sk']
-move_abbrs = ['mv', 'm']
+move_abbrs = ['mv']
 remove_abbrs = ['rm']
+command_prefix_abbrs = ['cp']
 
 # keep track of the songs to play next
 song_queue = []
@@ -157,7 +165,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
 
     @commands.command(help='Disconnects the bot from the voice channel', usage='', aliases=disconnect_abbrs)
     async def disconnect(self, ctx):
-        await Basic_Commands.stop(ctx)
+        await self.stop(ctx)
         if ctx.voice_client:
             await ctx.guild.voice_client.disconnect()
 
@@ -181,6 +189,21 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
         self.hm.stopped = True
         vc = ctx.guild.voice_client
         vc.stop()
+
+    @commands.command(help='Changes the command prefix to the given char', usage='<char>', aliases=command_prefix_abbrs)
+    async def command_prefix(self, ctx, arg):
+        if len(arg) == 1:
+            bot.command_prefix = arg
+            await ctx.send(f'Updated command prefix to \'{arg}\'')
+
+            # update config file
+            with open('.config', 'r') as file:
+                config = file.readlines()
+            config[0] = arg + '\n' # only edit first line
+            with open('.config', 'w') as file:
+                file.writelines(config)
+        else:
+            await ctx.send('Please use a single character')
 bot.add_cog(Basic_Commands())
 
 class Queue_Commands(commands.Cog, name='Queue', description='Queue related commands like queue, skip, move, etc...'):
