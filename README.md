@@ -10,16 +10,16 @@ Commands can be abbreviated. For example: /p is the same as /play.
 
 A song that has already been downloaded will be played right away instead of waiting to downloading it again.
 
-Can update the command prefix.
+Can update the command prefix (saved to config file).
+
+Can add, remove, or reset command abbreviations (saved to config file).
 
 Here is a list of what still needs to be implemented and improved:
 
 * Search for music using SC
-* fast forward / rewind command, help command
-* Register new command prefix (save and load to config file)
-* Register new command abbreviations (save and load to config file)
+* Fast forward and rewind command
 * Test that it works on multiple servers simultaneously 
-* Download music faster or find a way to stream it directly (this has been difficult to figure out)
+* Download music faster? Try running on cloud server with fast internet
 * Support on Linux/Mac OS (reconfirm installation instructions are accurate)
 
 ## Commands
@@ -64,25 +64,32 @@ Here is a list of what still needs to be implemented and improved:
 * If a search term or link is provided, then that is the next song that is played
     * **/sk**
 
-**/move** &lt;queue position src&gt; &lt;queue position dst&gt;
-* Moves the song at the specified position (first argument) to the specified position (second argument) in the queue
+**/move** &lt;queue position&gt; &lt;queue position&gt;
+* Moves the song at the given position (first argument) to the given position (second argument) in the queue
     * **/mv**
-    * **/m**
 
 **/remove** &lt;queue position&gt;
-* Removes the song at the specified position in the queue
+* Removes the song at the given position in the queue
     * **/rm**
 
 **/help**
 * Displays a list of commands
 
-**/command_prefix** &lt;char&gt;
-* Changes the command prefix to be the given character instead
+**/command_prefix** &lt;character&gt;
+* Changes the command prefix to the given character
+
+**/command_abbrev** &lt;add|remove|reset&gt; &lt;command&gt; &lt;abbreviation&gt;
+* Depending on the first argument, either add or remove the given abbreviation for the given command
+* Or reset the abbreviations for the given command (can ignore abbreviation argument)
+* Or reset the abbreviations for all commands (use 'all' for the command argument)
 
 ### Not yet implemented    
 
-**/command_abbrev** &lt;command&gt; &lt;abbreviation&gt;
-* Adds the specified abbreviation for the specified command
+**/fast_forward** &lt;seconds&gt;
+* Fast forwards the given amount of seconds in the current song
+
+**/rewind** &lt;seconds&gt;
+* Rewinds the given amount of seconds in the current song
 
 ## Running the Bot
 
@@ -136,6 +143,7 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 
 ## Version History
 
+Beta
 * 0.1 - 03/14/2022
     * Initial Release
     * Basic functionality implemented (play, pause, resume, stop, dc)
@@ -149,6 +157,9 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 * 0.4 - 07/11/2022
     * Added help method with command descriptions
     * Refactored code to use classes/cogs
+* 0.5 - 07/15/2022
+    * Added command prefix command
+    * Added command abbrev command
 
 ## License
 

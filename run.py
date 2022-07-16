@@ -1,4 +1,5 @@
 
+from ast import alias
 import sys
 from discord.ext import commands
 from discord import FFmpegPCMAudio, PCMVolumeTransformer, Color
@@ -9,6 +10,7 @@ import os
 import re
 import asyncio
 import urllib
+import ast
 
 with open('.config', 'r') as file:
     config = file.readlines()
@@ -24,17 +26,33 @@ menu = DefaultMenu(delete_after_timeout=True)
 bot = commands.Bot(command_prefix=command_prefix, help_command=help_command, menu=menu)
 
 # all possible commands and their abbreviations
-play_abbrs = ['p']
-disconnect_abbrs = ['dc']
-pause_abbrs = ['ps']
-resume_abbrs = ['rs']
-stop_abbrs = ['st']
-now_playing_abbrs = ['np']
-queue_abbrs = ['q']
-skip_abbrs = ['sk']
-move_abbrs = ['mv']
-remove_abbrs = ['rm']
-command_prefix_abbrs = ['cp']
+command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove', 'command_prefix', 'command_abbrev']
+# load command abbreviations from .config file
+play_abbrs = ast.literal_eval(config[1])
+disconnect_abbrs = ast.literal_eval(config[2])
+pause_abbrs = ast.literal_eval(config[3])
+resume_abbrs = ast.literal_eval(config[4])
+stop_abbrs = ast.literal_eval(config[5])
+now_playing_abbrs = ast.literal_eval(config[6])
+queue_abbrs = ast.literal_eval(config[7])
+skip_abbrs = ast.literal_eval(config[8])
+move_abbrs = ast.literal_eval(config[9])
+remove_abbrs = ast.literal_eval(config[10])
+command_prefix_abbrs = ast.literal_eval(config[11])
+command_abbrev_abbrs = ast.literal_eval(config[12])
+# or hard code
+# play_abbrs = ['p']
+# disconnect_abbrs = ['dc']
+# pause_abbrs = ['ps']
+# resume_abbrs = ['rs']
+# stop_abbrs = ['st']
+# now_playing_abbrs = ['np']
+# queue_abbrs = ['q']
+# skip_abbrs = ['sk']
+# move_abbrs = ['mv']
+# remove_abbrs = ['rm']
+# command_prefix_abbrs = ['cp']
+# command_abbrev_abbrs = ['ca']
 
 # keep track of the songs to play next
 song_queue = []
@@ -157,7 +175,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                 song_queue.append((song_id, song_title))
                 await ctx.send(f"**added to queue:** {song_title}")
         else:
-            await ctx.send("Song is too large to download.")
+            await ctx.send("Song is too large to download")
 
     @commands.command(help='Displays the song that is currently playing', usage='', aliases=now_playing_abbrs)
     async def now_playing(self, ctx):
@@ -203,7 +221,72 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             with open('.config', 'w') as file:
                 file.writelines(config)
         else:
-            await ctx.send('Please use a single character')
+            await ctx.send('Please use a single character.')
+
+    @commands.command(help='Adds the given abbreviation for the given command', usage='<add|remove|reset> <command> <abbreviation>', aliases=command_abbrev_abbrs)
+    async def command_abbrev(self, ctx, *, arg):
+        arg = arg.split(' ')
+        if len(arg) >= 1:
+            type = arg[0]
+        if len(arg) >= 2:
+            command = arg[1]
+        if len(arg) >= 3:
+            abbrev = arg[2]
+
+        if type == 'add' or type == 'a':
+            updated_command = bot.get_command(command)
+            aliases = updated_command.aliases 
+            aliases.append(abbrev)
+            updated_command.aliases = aliases
+            bot.remove_command(command)
+            bot.add_command(updated_command)
+            await ctx.send(f'Added command abbreviation \'{abbrev}\' for {command} command.')
+        elif type == 'remove' or type == 'r' or type == 'rm':
+            updated_command = bot.get_command(command)
+            aliases = updated_command.aliases 
+            aliases.remove(abbrev)
+            updated_command.aliases = aliases
+            bot.remove_command(command)
+            bot.add_command(updated_command)
+            await ctx.send(f'Removed command abbreviation \'{abbrev}\' for {command} command.')
+        elif type == 'reset' or type == 'rst':
+            if command == 'all':
+                for command in command_list:
+                    updated_command = bot.get_command(command)
+                    with open('.config_default', 'r') as file:
+                        config = file.readlines()
+                    line = command_list.index(command) + 1
+                    aliases = ast.literal_eval(config[line])
+                    updated_command.aliases = aliases
+                    bot.remove_command(command)
+                    bot.add_command(updated_command)
+                    await ctx.send(f'Reset command abbreviations for {command} command.')
+
+                    # update config file
+                    with open('.config', 'r') as file:
+                        config = file.readlines()
+                    line = command_list.index(command) + 1
+                    config[line] = str(aliases) + '\n' # only edit the line for the command
+                    with open('.config', 'w') as file:
+                        file.writelines(config)
+                return
+            else:
+                updated_command = bot.get_command(command)
+                with open('.config_default', 'r') as file:
+                    config = file.readlines()
+                line = command_list.index(command) + 1
+                aliases = ast.literal_eval(config[line])
+                updated_command.aliases = aliases
+                bot.remove_command(command)
+                bot.add_command(updated_command)
+                await ctx.send(f'Reset command abbreviations for {command} command.')
+        # update config file
+        with open('.config', 'r') as file:
+            config = file.readlines()
+        line = command_list.index(command) + 1
+        config[line] = str(aliases) + '\n' # only edit the line for the command
+        with open('.config', 'w') as file:
+            file.writelines(config)
 bot.add_cog(Basic_Commands())
 
 class Queue_Commands(commands.Cog, name='Queue', description='Queue related commands like queue, skip, move, etc...'):
