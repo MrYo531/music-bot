@@ -4,15 +4,15 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 ## Features
 
-Can search for songs on YT or SoundCloud.
+* Can search for songs on YT or SoundCloud.
 
-Commands can be abbreviated. For example: /p is the same as /play.
+* Commands can be abbreviated. For example: /p is the same as /play.
 
-A song that has already been downloaded will be played right away instead of waiting to downloading it again.
+* A song that has already been downloaded will be played right away instead of waiting to downloading it again.
 
-Can update the command prefix (saved to config file).
+* Can update the command prefix (saved to config file).
 
-Can add, remove, or reset command abbreviations (saved to config file).
+* Can add, remove, or reset command abbreviations (saved to config file).
 
 Here is a list of what still needs to be implemented and improved:
 
@@ -86,16 +86,16 @@ Here is a list of what still needs to be implemented and improved:
 ### Not yet implemented    
 
 **/fast_forward** &lt;seconds&gt;
-* Fast forwards the given amount of seconds in the current song
+* Fast forwards the current song the given amount of seconds
 
 **/rewind** &lt;seconds&gt;
-* Rewinds the given amount of seconds in the current song
+* Rewinds the current song the given amount of seconds
 
 ## Running the Bot
 
-These instructions assume you're using Windows and that you've already created a bot account.
+These instructions assume you're using Windows and that you've already created a bot account. (planning to update these instructions to work for all platforms)
 
-If you haven't, follow [these](https://discordpy.readthedocs.io/en/stable/discord.html#) instructions for creating a bot and inviting it to your server.
+If you haven't already, follow [these](https://discordpy.readthedocs.io/en/stable/discord.html#) instructions for creating a bot and inviting it to your server.
 
 The only required bot permissions are:
 * Read Messages/View Channels [General]

@@ -298,7 +298,7 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
         if song_queue:
             queue_msg = "**Song Queue:**\n"
             for place, (_, song_title) in enumerate(song_queue):
-                queue_msg += f'**[{place}]** {song_title}\n'
+                queue_msg += f'**[{place + 1}]** {song_title}\n'
             await ctx.send(queue_msg)
         else:
             await ctx.send("Song queue is empty.")
@@ -316,8 +316,8 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
 
     @commands.command(help='Moves the song at the specified position (first argument) to the specified position (second argument) in the queue', usage='<queue pos1> <queue pos2>', aliases=move_abbrs)
     async def move(self, ctx, q_pos_src, q_pos_dst):
-        q_pos_src = int(q_pos_src)
-        q_pos_dst = int(q_pos_dst)
+        q_pos_src = int(q_pos_src) - 1
+        q_pos_dst = int(q_pos_dst) - 1
         if q_pos_src < len(song_queue) and q_pos_dst < len(song_queue) and q_pos_src >= 0 and q_pos_dst >= 0 and q_pos_src != q_pos_dst: # sanitize input
             song_id, song_title = song_queue.pop(q_pos_src)
             song_queue.insert(q_pos_dst, (song_id, song_title))
@@ -325,7 +325,7 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
 
     @commands.command(help='Removes the song at the specified position in the queue', usage='<queue pos>', aliases=remove_abbrs)
     async def remove(self, ctx, q_pos):
-        q_pos = int(q_pos)
+        q_pos = int(q_pos) - 1
         if q_pos < len(song_queue) and q_pos >= 0: # sanitize input
             _, song_title = song_queue.pop(q_pos)
             await ctx.send(f"**removed song at position {q_pos}:** {song_title}")
