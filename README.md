@@ -4,7 +4,7 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 ## Features
 
-* Can search for songs on YT or SoundCloud.
+* Can search for songs on YouTube or SoundCloud.
 
 * Commands can be abbreviated. For example: /p is the same as /play.
 
@@ -16,18 +16,21 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 Here is a list of what still needs to be implemented and improved:
 
-* Search for music using SC
-* Fast forward and rewind command
+* Support playlists (YT and SC)
 * Test that it works on multiple servers simultaneously 
 * Download music faster? Try running on cloud server with fast internet
+* Try running publicly, allowing anyone to invite the bot.
 * Support on Linux/Mac OS (reconfirm installation instructions are accurate)
+* Fast forward and rewind command
 
 ## Commands
 
 **/play** &lt;search term or link&gt;
 
 * Plays the song from the given search term or link
-* Searchs for songs on YT and supports both YT or SC links
+* Searchs for songs on YT or SC and supports both YT and SC links
+* Searchs on YT by default, type 'sc' before the search term to use SC
+* Supports YT and SC playlists
 * Can also be called with: 
     * **/p**
 
@@ -114,6 +117,13 @@ The only required bot permissions are:
 * youtube-search-python
 * discord-pretty-help
 
+Other common libraries:
+* os
+* re
+* asyncio
+* urllib
+* ast
+
 You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
 
 The python libaries are already installed in the python virtual environment, 'bot-env'. That way, you can follow these instructions without having to manually install them yourself.
@@ -158,8 +168,10 @@ Beta
     * Added help method with command descriptions
     * Refactored code to use classes/cogs
 * 0.5 - 07/15/2022
-    * Added command prefix command
-    * Added command abbrev command
+    * Added command_prefix command
+    * Added command_abbrev command
+* 0.6 - 07/26/2022
+    * Added support for searching on SoundCloud
 
 ## License
 

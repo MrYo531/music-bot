@@ -1,5 +1,3 @@
-
-from ast import alias
 import sys
 from discord.ext import commands
 from discord import FFmpegPCMAudio, PCMVolumeTransformer, Color
@@ -157,11 +155,25 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
     def __init__(self):
         self.hm = HelperMethods()
 
-    @commands.command(help='Plays the song from the given search term or link\n- Searches for songs on YT and supports both YT or SC links', usage='<search term or link>', aliases=play_abbrs)
+    @commands.command(help='Plays the song from the given search term or link\n- Searches for songs on YT and supports both YT or SC links\n- Searchs on YT by default, type \'sc\' before the search term to use SC\n- Supports YT and SC playlists', usage='<search term or link>', aliases=play_abbrs)
     async def play(self, ctx, *, arg):
         await self.hm.joinChannel(ctx)
         if not bot.voice_clients: # bot is not connected to voice channel
             return
+
+        print(arg)
+
+        # search on soundcloud
+        if arg[0:3] == 'sc ':
+            search_term = arg[3:]
+            search_term = urllib.parse.quote(search_term)
+            url = r'https://soundcloud.com/search?q=' + search_term
+            res = urllib.request.urlopen(url).read().decode('utf-8')
+            sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[0][10:]
+            if r'/' not in sc_song_url: # first link might be a profile instead of a song
+                sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[1][10:]
+            sc_song_url = r'https://soundcloud.com/' + sc_song_url
+            arg = sc_song_url
 
         song_id, song_title = await self.hm.get_song_info(arg)
 
@@ -307,7 +319,7 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
     async def skip(self, ctx, *args):
         if len(args):
             await Basic_Commands.stop(self, ctx)
-            await Basic_Commands.play(self, ctx=ctx, arg=''.join(list(args)))
+            await Basic_Commands.play(self, ctx=ctx, arg=' '.join(list(args)))
         else:
             await Basic_Commands.stop(self, ctx)
             if song_queue:
@@ -321,14 +333,14 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
         if q_pos_src < len(song_queue) and q_pos_dst < len(song_queue) and q_pos_src >= 0 and q_pos_dst >= 0 and q_pos_src != q_pos_dst: # sanitize input
             song_id, song_title = song_queue.pop(q_pos_src)
             song_queue.insert(q_pos_dst, (song_id, song_title))
-            await ctx.send(f"**moved song to position {q_pos_dst}:** {song_title}")
+            await ctx.send(f"**moved song to position {q_pos_dst + 1}:** {song_title}")
 
     @commands.command(help='Removes the song at the specified position in the queue', usage='<queue pos>', aliases=remove_abbrs)
     async def remove(self, ctx, q_pos):
         q_pos = int(q_pos) - 1
         if q_pos < len(song_queue) and q_pos >= 0: # sanitize input
             _, song_title = song_queue.pop(q_pos)
-            await ctx.send(f"**removed song at position {q_pos}:** {song_title}")
+            await ctx.send(f"**removed song at position {q_pos + 1}:** {song_title}")
 bot.add_cog(Queue_Commands())
 
 def main():
