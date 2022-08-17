@@ -6,6 +6,8 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 * Can search for songs on YouTube or SoundCloud.
 
+* Can stream songs directly, with the option to download them instead.
+
 * Commands can be abbreviated. For example: /p is the same as /play.
 
 * A song that has already been downloaded will be played right away instead of waiting to downloading it again.
@@ -16,12 +18,12 @@ A simple Discord bot that plays songs from YouTube or SoundCloud through the voi
 
 Here is a list of what still needs to be implemented and improved:
 
+* Fast forward and rewind command
 * Support playlists (YT and SC)
 * Test that it works on multiple servers simultaneously 
-* Download music faster? Try running on cloud server with fast internet
+* Download music faster? Try hosting on AWS with a fast internet connection
+* Support on Linux/Mac OS (reconfirm installation instructions are accurate and that code runs)
 * Try running publicly, allowing anyone to invite the bot.
-* Support on Linux/Mac OS (reconfirm installation instructions are accurate)
-* Fast forward and rewind command
 
 ## Commands
 
@@ -156,7 +158,7 @@ Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 Beta
 * 0.1 - 03/14/2022
     * Initial Release
-    * Basic functionality implemented (play, pause, resume, stop, dc)
+    * Basic functionality implemented (play, pause, resume, stop, disconnect)
 * 0.2 - 06/27/2022
     * Added SoundCloud link support
     * Added YT search capabilities
@@ -172,6 +174,8 @@ Beta
     * Added command_abbrev command
 * 0.6 - 07/26/2022
     * Added support for searching on SoundCloud
+* 0.7 - 08/16/2022
+    * Added support for streaming songs directly (instead of downloading them)
 
 ## License
 
@@ -181,4 +185,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 * Documentation for [discord.py](https://discordpy.readthedocs.io/en/stable/index.html)
 * Documentation for [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+* Code for [streaming audio](https://github.com/Rapptz/discord.py/blob/master/examples/basic_voice.py#L34)
 * And obviously [Stack Overflow](https://stackoverflow.com/)
