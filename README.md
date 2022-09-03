@@ -151,7 +151,7 @@ And that's it. In Discord, join a voice channel and type the following command i
 
 ## Author
 
-Coded from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
+Coded 'mostly' from scratch by [Kidus Yohannes](https://kidusyohannes.me/)
 
 ## Version History
 
