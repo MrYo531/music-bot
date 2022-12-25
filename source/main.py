@@ -43,6 +43,7 @@ command_abbrev_abbrs = config['command_abbrev']
 # Data to keep track of
 song_queue = []
 current_song = ''
+error_code = 0
 
 # Load names of currently downloaded songs
 downloaded_songs = set()
@@ -51,7 +52,7 @@ for song in os.listdir(song_dir):
     downloaded_songs.add(song[:-4]) # don't include '.mp3'
 
 # Specify whether to stream the music directly or download it
-download = True
+download = False
 
 ### The following is used to STREAM youtube/soundcloud audio instead of downloading it
 # Copied from discord.py -> examples -> basic_voice.py
@@ -153,11 +154,15 @@ class HelperMethods():
             global current_song
             current_song = song_title
             await Basic_Commands.now_playing(bot, ctx)
+            global error_code
+            print(f"error_code: {error_code}")
 
     def downloadMusic(url):
         def download_filter(info, *, incomplete):
             duration = info.get('duration')
-            if duration and duration > (600): # 10 minutes cap
+            if duration and duration > 600: # 10 minutes cap
+                global error_code
+                error_code = -1
                 return 'The video/song is too long'
 
         ytdl_opts = {
@@ -170,6 +175,8 @@ class HelperMethods():
             'match_filter': download_filter
         }
 
+        global error_code
+        error_code = 0
         song_id = song_title = ''
         if 'soundcloud' not in url:
             song_results = Video.getInfo(url, mode = ResultMode.json)
@@ -177,25 +184,24 @@ class HelperMethods():
             song_title = song_results['title']
         else:
             res = urllib.request.urlopen(url).read().decode('utf8')
-            song_id = re.findall(r"(?<=:)(\d*)(?=')", res)[0]
-            print(f"song_id: {song_id}") # TODO FIX
-            song_title = re.findall(r"(?<=:title' content=')(.*?)(?=')", res)[0]
+            song_id = re.findall(r'(?<=:)(\d*)(?=")', res)[0]
+            song_title = re.findall(r'(?<=:title" content=")(.*?)(?=")', res)[0]
         
         if download and song_id not in downloaded_songs:
-            downloaded_songs.add(song_id)
-
             with YoutubeDL(ytdl_opts) as ytdl:
-                error_code = ytdl.download([url])
-                print(error_code)
+                ytdl.download([url])
 
-            if not os.path.exists('songs'):
-                os.makedirs('songs')
+            if error_code != -1:
+                downloaded_songs.add(song_id)
 
-            for file in os.listdir('./'):
-                if file.endswith('.mp3'):
-                    song_id = re.findall(r'(?<=\[).+?(?=\])', file)[-1]
-                    song_title = file[:-(len(f' [{song_id}].mp3'))]
-                    os.replace(file, rf'songs/{song_id}.mp3')
+                if not os.path.exists('songs'):
+                    os.makedirs('songs')
+
+                for file in os.listdir('./'):
+                    if file.endswith('.mp3'):
+                        song_id = re.findall(r'(?<=\[).+?(?=\])', file)[-1]
+                        song_title = file[:-(len(f' [{song_id}].mp3'))]
+                        os.replace(file, rf'songs/{song_id}.mp3')
 
         return song_id, song_title
 
@@ -215,16 +221,17 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             url = r'https://soundcloud.com/search?q=' + search_term
             res = urllib.request.urlopen(url).read().decode('utf-8')
             sc_song_index = 0
-            sc_song_url = re.findall(r"(?<=<li><h2>)(.*)(?='>)", res)[sc_song_index][10:]
+            sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[sc_song_index][10:]
             while r'/' not in sc_song_url: # link might be a profile instead of a song
                 sc_song_index += 1
-                sc_song_url = re.findall(r"(?<=<li><h2>)(.*)(?='>)", res)[sc_song_index][10:]
+                sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[sc_song_index][10:]
             sc_song_url = r'https://soundcloud.com/' + sc_song_url
             arg = sc_song_url
 
         song_id, song_title, song_url = await HelperMethods.get_song_info(arg)
 
-        if song_id:
+        global error_code
+        if song_id and error_code != -1:
             if not ctx.voice_client.is_playing():
                 await HelperMethods.playMusic(ctx, song_id, song_title, song_url)
                 HelperMethods.stopped = False
