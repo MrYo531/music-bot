@@ -124,7 +124,7 @@ Other common libraries:
 * re
 * asyncio
 * urllib
-* ast
+* json
 
 You can install Python from the Microsoft Store and FFmpeg using [this](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/) guide.
 

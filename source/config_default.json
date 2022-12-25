@@ -1,0 +1,39 @@
+{
+    "prefix": "/",
+    "play": [
+        "p"
+    ],
+    "disconnect": [
+        "dc"
+    ],
+    "pause": [
+        "ps"
+    ],
+    "resume": [
+        "rs"
+    ],
+    "stop": [
+        "st"
+    ],
+    "now_playing": [
+        "np"
+    ],
+    "queue": [
+        "q"
+    ],
+    "skip": [
+        "sk"
+    ],
+    "move": [
+        "mv"
+    ],
+    "remove": [
+        "rm"
+    ],
+    "command_prefix": [
+        "cp"
+    ],
+    "command_abbrev": [
+        "ca"
+    ]
+}
