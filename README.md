@@ -176,6 +176,9 @@ Beta
     * Added support for searching on SoundCloud
 * 0.7 - 08/16/2022
     * Added support for streaming songs directly (instead of downloading them)
+* 0.8 - 12/25/2022
+    * Fixed a lot bugs and added warning/helper messages
+    * Added download_songs command for controlling whether to download or stream songs
 
 ## License
 

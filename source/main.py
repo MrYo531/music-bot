@@ -25,7 +25,7 @@ bot = commands.Bot(command_prefix=command_prefix, help_command=help_command, men
 
 
 # Load command abbreviations from config.json file
-command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove', 'command_prefix', 'command_abbrev']
+command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove', 'command_prefix', 'command_abbrev', 'download_songs']
 play_abbrs = config['play']
 disconnect_abbrs = config['disconnect']
 pause_abbrs = config['pause']
@@ -38,6 +38,7 @@ move_abbrs = config['move']
 remove_abbrs = config['remove']
 command_prefix_abbrs = config['command_prefix']
 command_abbrev_abbrs = config['command_abbrev']
+download_songs_abbrs = config['download_songs']
 
 
 # Data to keep track of
@@ -52,7 +53,7 @@ for song in os.listdir(song_dir):
     downloaded_songs.add(song[:-4]) # don't include '.mp3'
 
 # Specify whether to stream the music directly or download it
-download = False
+download = config['download']
 
 ### The following is used to STREAM youtube/soundcloud audio instead of downloading it
 # Copied from discord.py -> examples -> basic_voice.py
@@ -186,12 +187,20 @@ class HelperMethods():
             res = urllib.request.urlopen(url).read().decode('utf8')
             song_id = re.findall(r'(?<=:)(\d*)(?=")', res)[0]
             song_title = re.findall(r'(?<=:title" content=")(.*?)(?=")', res)[0]
+            song_title = song_title.replace('&#39;', '\'') # unicode character for '
         
-        if download and song_id not in downloaded_songs:
-            with YoutubeDL(ytdl_opts) as ytdl:
+        # Check for YT sign in to confirm your age error (-2)
+        with YoutubeDL(ytdl_opts) as ytdl:
+            try:
                 ytdl.download([url])
+            except:
+                error_code = -2
+        for file in os.listdir('./'):
+            if file.endswith('.mp3'):    
+                os.remove(file)
 
-            if error_code != -1:
+        if download and song_id not in downloaded_songs:
+            if error_code == 0:
                 downloaded_songs.add(song_id)
 
                 if not os.path.exists('songs'):
@@ -201,9 +210,13 @@ class HelperMethods():
                     if file.endswith('.mp3'):
                         song_id = re.findall(r'(?<=\[).+?(?=\])', file)[-1]
                         song_title = file[:-(len(f' [{song_id}].mp3'))]
-                        os.replace(file, rf'songs/{song_id}.mp3')
+                        os.replace(file, rf'songs/{song_id}.mp3')   
 
         return song_id, song_title
+
+    def update_config_file():
+        with open('source\config.json', 'w') as file:
+            file.write(json.dumps(config, indent=4))
 
 
 class Basic_Commands(commands.Cog, name='Basic', description='Basic commands like play, now playing, disconnect, etc...'):
@@ -231,7 +244,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
         song_id, song_title, song_url = await HelperMethods.get_song_info(arg)
 
         global error_code
-        if song_id and error_code != -1:
+        if song_id and error_code == 0:
             if not ctx.voice_client.is_playing():
                 await HelperMethods.playMusic(ctx, song_id, song_title, song_url)
                 HelperMethods.stopped = False
@@ -239,11 +252,18 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                 song_queue.append((song_id, song_title, song_url))
                 await ctx.send(f'**added to queue:** {song_title}')
         else:
-            await ctx.send('Song is too large to download')
+            if error_code == -1:
+                await ctx.send('Song is too large to download.\n Try streaming songs instead (use \'/ds false\').')
+            elif error_code == -2:
+                await ctx.send('Unable to play song, it may be inappropriate for some users.')
 
     @commands.command(help='Displays the song that is currently playing', usage='', aliases=now_playing_abbrs)
     async def now_playing(self, ctx):
-        await ctx.send(f'**__Now Playing:__** {current_song}')
+        vc = ctx.guild.voice_client
+        if vc and vc.is_playing():
+            await ctx.send(f'**__Now Playing:__** {current_song}')
+        else:
+            await ctx.send(f'Nothing is playing right now.')
 
     @commands.command(help='Disconnects the bot from the voice channel', usage='', aliases=disconnect_abbrs)
     async def disconnect(self, ctx):
@@ -279,8 +299,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             await ctx.send(f'Updated command prefix to \'{arg}\'')
 
             config["prefix"] = arg
-            with open('source\config.json', 'w') as file:
-                file.write(json.dumps(config, indent=4))
+            HelperMethods.update_config_file()
         else:
             await ctx.send('Please use a single character.')
 
@@ -323,11 +342,8 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                     bot.remove_command(command)
                     bot.add_command(updated_command)
                     await ctx.send(f'Reset command abbreviations for {command} command.')
-
                 config = config_default
-                with open('source\config.json', 'w') as file:
-                    file.write(json.dumps(config, indent=4))
-
+                HelperMethods.update_config_file()
                 return
             else:
                 updated_command = bot.get_command(command)
@@ -336,10 +352,33 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                 bot.remove_command(command)
                 bot.add_command(updated_command)
                 await ctx.send(f'Reset command abbreviations for {command} command.')
+        else:
+            await ctx.send('That\'s not a valid option, please use one of the following: <true|false|?>')
 
         config[command] = aliases
-        with open('source\config.json', 'w') as file:
-            file.write(json.dumps(config, indent=4))
+        HelperMethods.update_config_file()
+
+    @commands.command(help='Controls whether to download songs or to stream them (default).', usage='<true|false|?>', aliases=download_songs_abbrs)
+    async def download_songs(self, ctx, arg):
+        global download
+        if arg == "true":
+            download = True
+            config['download'] = True
+            HelperMethods.update_config_file()
+            await ctx.send(f'Songs are now being downloaded.')
+        elif arg == "false":
+            download = False
+            config['download'] = False
+            HelperMethods.update_config_file()
+            await ctx.send(f'Songs are now being streamed.')
+        elif arg == '?' or arg == '':
+            if download:
+                downloaded_string = "downloaded"
+            else:
+                downloaded_string = "streamed"
+            await ctx.send(f'Songs are being {downloaded_string}.')
+        else:
+            await ctx.send('That\'s not a valid option, please use one of the following: <true|false|?>')
 
 bot.add_cog(Basic_Commands())
 

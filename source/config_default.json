@@ -35,5 +35,9 @@
     ],
     "command_abbrev": [
         "ca"
-    ]
+    ],
+    "download_songs": [
+        "ds"
+    ],
+    "download": false
 }
