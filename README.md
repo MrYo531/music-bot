@@ -77,9 +77,6 @@ Here is a list of what still needs to be implemented and improved:
 * Removes the song at the given position in the queue
     * **/rm**
 
-**/help**
-* Displays a list of commands
-
 **/command_prefix** &lt;character&gt;
 * Changes the command prefix to the given character
 
@@ -87,6 +84,12 @@ Here is a list of what still needs to be implemented and improved:
 * Depending on the first argument, either add or remove the given abbreviation for the given command
 * Or reset the abbreviations for the given command (can ignore abbreviation argument)
 * Or reset the abbreviations for all commands (use 'all' for the command argument)
+
+**/download_songs** &lt;true|false|?&gt;
+* Controls whether to download songs or to stream them (default).
+
+**/help**
+* Displays a list of commands
 
 ### Not yet implemented    
 
