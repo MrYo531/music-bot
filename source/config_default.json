@@ -30,6 +30,9 @@
     "remove": [
         "rm"
     ],
+    "clear": [
+        "cl"
+    ],
     "command_prefix": [
         "cp"
     ],

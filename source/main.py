@@ -11,6 +11,7 @@ from yt_dlp import YoutubeDL
 from youtubesearchpython import VideosSearch, Video, ResultMode
 from pretty_help import PrettyHelp, DefaultMenu
 
+
 # Load command prefix from config.json file
 with open('source\config.json', 'r') as file:
     config = json.load(file)
@@ -25,7 +26,7 @@ bot = commands.Bot(command_prefix=command_prefix, help_command=help_command, men
 
 
 # Load command abbreviations from config.json file
-command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove', 'command_prefix', 'command_abbrev', 'download_songs']
+command_list = ['play', 'disconnect', 'pause', 'resume', 'stop', 'now_playing', 'queue', 'skip', 'move', 'remove', 'clear', 'command_prefix', 'command_abbrev', 'download_songs']
 play_abbrs = config['play']
 disconnect_abbrs = config['disconnect']
 pause_abbrs = config['pause']
@@ -36,15 +37,17 @@ queue_abbrs = config['queue']
 skip_abbrs = config['skip']
 move_abbrs = config['move']
 remove_abbrs = config['remove']
+clear_abbrs = config['clear']
 command_prefix_abbrs = config['command_prefix']
 command_abbrev_abbrs = config['command_abbrev']
 download_songs_abbrs = config['download_songs']
 
+# Specify whether to stream the music directly or download it
+download = config['download']
 
-# Data to keep track of
+# Global data to keep track of
 song_queue = []
 current_song = ''
-error_code = 0
 
 # Load names of currently downloaded songs
 downloaded_songs = set()
@@ -52,8 +55,6 @@ song_dir = 'songs'
 for song in os.listdir(song_dir):
     downloaded_songs.add(song[:-4]) # don't include '.mp3'
 
-# Specify whether to stream the music directly or download it
-download = config['download']
 
 ### The following is used to STREAM youtube/soundcloud audio instead of downloading it
 # Copied from discord.py -> examples -> basic_voice.py
@@ -74,6 +75,8 @@ ytdl_format_options = {
 
 ffmpeg_options = {
     'options': '-vn',
+    # reconnect instead of terminating when receiving corrupt packets
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 }
 
 ytdl = YoutubeDL(ytdl_format_options)
@@ -98,6 +101,8 @@ class YTDLSource(PCMVolumeTransformer):
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+
+
 ##################################################################################
 
 
@@ -131,10 +136,11 @@ class HelperMethods():
             search_results = VideosSearch(search_term, limit=1).result()
             song_url = search_results['result'][0]['link']
 
-        song_id, song_title = HelperMethods.downloadMusic(song_url)
-        return song_id, song_title, song_url
+        song_id, song_title, error_code = HelperMethods.downloadMusic(song_url)
+        return song_id, song_title, song_url, error_code
 
     async def play_next_song(ctx):
+        global song_queue
         if song_queue and not HelperMethods.stopped:
             next_song_id, next_song_title, next_song_url = song_queue.pop(0)
             await HelperMethods.playMusic(ctx, next_song_id, next_song_title, next_song_url)
@@ -142,29 +148,29 @@ class HelperMethods():
     async def playMusic(ctx, song_id, song_title, song_url):
         vc = ctx.guild.voice_client    
         if not vc.is_playing():
-            if download:
-                audio = FFmpegPCMAudio(rf'songs/{song_id}.mp3')
-                vc.play(audio, after=lambda e: asyncio.run_coroutine_threadsafe(HelperMethods.play_next_song(ctx), bot.loop))
-            else:
-                # streams the audio without downloading it!
-                async with ctx.typing():
-                    player = await YTDLSource.from_url(song_url, loop=bot.loop, stream=True)
-                    ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+            try:
+                global download
+                if download:
+                    audio = FFmpegPCMAudio(rf'songs/{song_id}.mp3')
+                    vc.play(audio, after=lambda e: asyncio.run_coroutine_threadsafe(HelperMethods.play_next_song(ctx), bot.loop))
+                else:
+                    # streams the audio without downloading it!
+                    async with ctx.typing():
+                        player = await YTDLSource.from_url(song_url, loop=bot.loop, stream=True)
+                        ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else asyncio.run_coroutine_threadsafe(HelperMethods.play_next_song(ctx), bot.loop))
 
-            vc.source = PCMVolumeTransformer(vc.source, volume=0.25)
-            global current_song
-            current_song = song_title
-            await Basic_Commands.now_playing(bot, ctx)
-            global error_code
-            print(f"error_code: {error_code}")
+                vc.source = PCMVolumeTransformer(vc.source, volume=0.25)
+                global current_song
+                current_song = song_title
+                await Basic_Commands.now_playing(bot, ctx)
+            except:
+                await ctx.send('Unable to play song, it may be inappropriate for some users.')
 
     def downloadMusic(url):
         def download_filter(info, *, incomplete):
             duration = info.get('duration')
             if duration and duration > 600: # 10 minutes cap
-                global error_code
-                error_code = -1
-                return 'The video/song is too long'
+                raise Exception('The video/song is too long')
 
         ytdl_opts = {
             'format': 'bestaudio/best',
@@ -176,7 +182,6 @@ class HelperMethods():
             'match_filter': download_filter
         }
 
-        global error_code
         error_code = 0
         song_id = song_title = ''
         if 'soundcloud' not in url:
@@ -184,22 +189,29 @@ class HelperMethods():
             song_id = song_results['id']
             song_title = song_results['title']
         else:
-            res = urllib.request.urlopen(url).read().decode('utf8')
-            song_id = re.findall(r'(?<=:)(\d*)(?=")', res)[0]
-            song_title = re.findall(r'(?<=:title" content=")(.*?)(?=")', res)[0]
-            song_title = song_title.replace('&#39;', '\'') # unicode character for '
-        
-        # Check for YT sign in to confirm your age error (-2)
-        with YoutubeDL(ytdl_opts) as ytdl:
             try:
-                ytdl.download([url])
+                res = urllib.request.urlopen(url).read().decode('utf8')
+                song_id = re.findall(r'(?<=:)(\d*)(?=")', res)[0]
+                song_title = re.findall(r'(?<=:title" content=")(.*?)(?=")', res)[0]
+                song_title = song_title.replace('&#39;', '\'') # unicode character for '
+                song_title = song_title.replace('&amp;', '&') # unicode character for '
             except:
-                error_code = -2
-        for file in os.listdir('./'):
-            if file.endswith('.mp3'):    
-                os.remove(file)
+                error_code = -3 # invalid or private url
+                return song_id, song_title, error_code
 
+        global download
         if download and song_id not in downloaded_songs:
+            # Check for YT 'sign in to confirm your age error' (-2)
+            with YoutubeDL(ytdl_opts) as ytdl:  
+                try:
+                    res = ytdl.download([url])
+                except Exception as e:
+                    if str(e) == 'The video/song is too long':
+                        if download:
+                            error_code = -1 # song too long
+                    else:
+                        error_code = -2 # song inappropriate
+
             if error_code == 0:
                 downloaded_songs.add(song_id)
 
@@ -210,52 +222,95 @@ class HelperMethods():
                     if file.endswith('.mp3'):
                         song_id = re.findall(r'(?<=\[).+?(?=\])', file)[-1]
                         song_title = file[:-(len(f' [{song_id}].mp3'))]
-                        os.replace(file, rf'songs/{song_id}.mp3')   
+                        os.replace(file, rf'songs/{song_id}.mp3')
 
-        return song_id, song_title
+        return song_id, song_title, error_code
 
     def update_config_file():
         with open('source\config.json', 'w') as file:
             file.write(json.dumps(config, indent=4))
 
+    @bot.event
+    # disconnect after no music is playing for 60 seconds
+    async def on_voice_state_update(member, before, after):
+        threshold = 5 # seconds
+        if not member.id == bot.user.id:
+            return
+
+        elif before.channel is None:
+            voice = after.channel.guild.voice_client
+            time = 0
+            while True:
+                await asyncio.sleep(1)
+                time = time + 1
+                if voice.is_playing() and not voice.is_paused():
+                    time = 0
+                if time == threshold:
+                    await voice.disconnect()
+                if not voice.is_connected():
+                    break
+
 
 class Basic_Commands(commands.Cog, name='Basic', description='Basic commands like play, now playing, disconnect, etc...'):
 
     @commands.command(help='Plays the song from the given search term or link\n- Searches for songs on YT and supports both YT or SC links\n- Searchs on YT by default, type \'sc\' before the search term to use SC\n- Supports YT and SC playlists', usage='<search term or link>', aliases=play_abbrs)
-    async def play(self, ctx, *, arg):
+    async def play(self, ctx, *, arg, skip=False, index=-1):
         await HelperMethods.joinChannel(ctx)
         if not bot.voice_clients:
             return
-
+        
         # search on soundcloud
         if arg[0:3] == 'sc ':
             search_term = arg[3:]
             search_term = urllib.parse.quote(search_term)
-            url = r'https://soundcloud.com/search?q=' + search_term
+            url = r'https://soundcloud.com/search/sounds?q=' + search_term
             res = urllib.request.urlopen(url).read().decode('utf-8')
             sc_song_index = 0
             sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[sc_song_index][10:]
-            while r'/' not in sc_song_url: # link might be a profile instead of a song
-                sc_song_index += 1
-                sc_song_url = re.findall(r'(?<=<li><h2>)(.*)(?=">)', res)[sc_song_index][10:]
             sc_song_url = r'https://soundcloud.com/' + sc_song_url
             arg = sc_song_url
 
-        song_id, song_title, song_url = await HelperMethods.get_song_info(arg)
+        # playlist
+        if 'playlist?list=' in arg or '/sets/' in arg:
+            # youtube vs soundcloud playlist
+            if 'playlist?list=' in arg: 
+                regex_match = r'(?<="videoId":")([a-zA-Z0-9]+)(?=")'
+                url_prefix = r'https://youtu.be/'
+            else:
+                regex_match = r'(?<="url" href=")(.*)(?=">)'
+                url_prefix = r'https://soundcloud.com'
 
-        global error_code
-        if song_id and error_code == 0:
+            url = arg
+            res = urllib.request.urlopen(url).read().decode('utf-8')
+            song_urls = re.findall(regex_match, res)
+            song_urls = sorted(set(song_urls), key=song_urls.index)
+
+            # play/queue all the songs in the playlist
+            if song_urls[0] in url: # ignore the first one if it is just the playlist link (sc)
+                song_urls.pop(0)
+            for i, song_url in enumerate(song_urls):
+                song_url = url_prefix + song_url
+                await Basic_Commands.play(self, ctx, arg=song_url, skip=skip, index=i-1)
+            return
+        else:
+            song_id, song_title, song_url, error_code = await HelperMethods.get_song_info(arg)
+
+        if error_code == 0:
             if not ctx.voice_client.is_playing():
                 await HelperMethods.playMusic(ctx, song_id, song_title, song_url)
                 HelperMethods.stopped = False
             else:
-                song_queue.append((song_id, song_title, song_url))
+                if not skip:
+                    song_queue.append((song_id, song_title, song_url))
+                else:
+                    song_queue.insert(index, (song_id, song_title, song_url))
                 await ctx.send(f'**added to queue:** {song_title}')
-        else:
-            if error_code == -1:
-                await ctx.send('Song is too large to download.\n Try streaming songs instead (use \'/ds false\').')
-            elif error_code == -2:
-                await ctx.send('Unable to play song, it may be inappropriate for some users.')
+        elif error_code == -1:
+            await ctx.send('Song is too large to download.\nTry streaming songs instead (use \'/ds false\').')
+        elif error_code == -2:
+            await ctx.send('Unable to play song, it may be inappropriate for some users.')
+        elif error_code == -3:
+            await ctx.send('Song does not exist, make sure the url is correct and not private.')
 
     @commands.command(help='Displays the song that is currently playing', usage='', aliases=now_playing_abbrs)
     async def now_playing(self, ctx):
@@ -303,7 +358,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
         else:
             await ctx.send('Please use a single character.')
 
-    @commands.command(help='Adds the given abbreviation for the given command', usage='<add|remove|reset> <command> <abbreviation>', aliases=command_abbrev_abbrs)
+    @commands.command(help='Adds (or removes) the given abbreviation for the given command (can be abbreviated)\n- Can also reset the abbreviations for the given command (ignore the abbreviation argument)\n- Can also reset the abbreviations for all commands (use \'all\' for the command argument)', usage='<add|remove|reset> <command> <abbreviation>', aliases=command_abbrev_abbrs)
     async def command_abbrev(self, ctx, *, arg):
         global config
         arg = arg.split(' ')
@@ -319,7 +374,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             aliases = updated_command.aliases 
             aliases.append(abbrev)
             updated_command.aliases = aliases
-            bot.remove_command(command)
+            bot.remove_command(str(updated_command))
             bot.add_command(updated_command)
             await ctx.send(f'Added command abbreviation \'{abbrev}\' for {command} command.')
         elif type == 'remove' or type == 'r' or type == 'rm':
@@ -327,7 +382,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             aliases = updated_command.aliases 
             aliases.remove(abbrev)
             updated_command.aliases = aliases
-            bot.remove_command(command)
+            bot.remove_command(str(updated_command))
             bot.add_command(updated_command)
             await ctx.send(f'Removed command abbreviation \'{abbrev}\' for {command} command.')
         elif type == 'reset' or type == 'rst':
@@ -339,7 +394,7 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                     updated_command = bot.get_command(command)
                     aliases = config_default[command]
                     updated_command.aliases = aliases
-                    bot.remove_command(command)
+                    bot.remove_command(str(updated_command))
                     bot.add_command(updated_command)
                     await ctx.send(f'Reset command abbreviations for {command} command.')
                 config = config_default
@@ -349,29 +404,32 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
                 updated_command = bot.get_command(command)
                 aliases = config_default[command]
                 updated_command.aliases = aliases
-                bot.remove_command(command)
+                bot.remove_command(str(updated_command))
                 bot.add_command(updated_command)
                 await ctx.send(f'Reset command abbreviations for {command} command.')
         else:
             await ctx.send('That\'s not a valid option, please use one of the following: <true|false|?>')
 
-        config[command] = aliases
+        config[str(updated_command)] = aliases
         HelperMethods.update_config_file()
 
     @commands.command(help='Controls whether to download songs or to stream them (default).', usage='<true|false|?>', aliases=download_songs_abbrs)
-    async def download_songs(self, ctx, arg):
+    async def download_songs(self, ctx, *arg):
+        if arg:
+            arg = arg[0]
+        
         global download
-        if arg == "true":
+        if arg == "true" or arg == "t":
             download = True
             config['download'] = True
             HelperMethods.update_config_file()
             await ctx.send(f'Songs are now being downloaded.')
-        elif arg == "false":
+        elif arg == "false" or arg == "f":
             download = False
             config['download'] = False
             HelperMethods.update_config_file()
             await ctx.send(f'Songs are now being streamed.')
-        elif arg == '?' or arg == '':
+        elif arg == '?' or not arg:
             if download:
                 downloaded_string = "downloaded"
             else:
@@ -379,13 +437,13 @@ class Basic_Commands(commands.Cog, name='Basic', description='Basic commands lik
             await ctx.send(f'Songs are being {downloaded_string}.')
         else:
             await ctx.send('That\'s not a valid option, please use one of the following: <true|false|?>')
-
 bot.add_cog(Basic_Commands())
 
 
 class Queue_Commands(commands.Cog, name='Queue', description='Queue related commands like queue, skip, move, etc...'):
     @commands.command(help='Displays the songs currently in queue the music', usage='', aliases=queue_abbrs)
     async def queue(self, ctx):
+        global song_queue
         if song_queue:
             queue_msg = '**Song Queue:**\n'
             for place, (_, song_title, _) in enumerate(song_queue):
@@ -398,7 +456,8 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
     async def skip(self, ctx, *args):
         if len(args):
             await Basic_Commands.stop(self, ctx)
-            await Basic_Commands.play(self, ctx=ctx, arg=' '.join(list(args)))
+            arg = ' '.join(list(args))
+            await Basic_Commands.play(self, ctx, arg=arg, skip=True)
         else:
             await Basic_Commands.stop(self, ctx)
             if song_queue:
@@ -414,12 +473,22 @@ class Queue_Commands(commands.Cog, name='Queue', description='Queue related comm
             song_queue.insert(q_pos_dst, (song_id, song_title, song_url))
             await ctx.send(f'**moved song to position {q_pos_dst + 1}:** {song_title}')
 
-    @commands.command(help='Removes the song at the specified position in the queue', usage='<queue pos>', aliases=remove_abbrs)
+    @commands.command(help='Removes the song at the specified position in the queue\n- Use \'all\' to remove all the songs in the queue', usage='<queue pos>', aliases=remove_abbrs)
     async def remove(self, ctx, q_pos):
-        q_pos = int(q_pos) - 1
-        if q_pos < len(song_queue) and q_pos >= 0: # sanitize the input
-            _, song_title, _ = song_queue.pop(q_pos)
-            await ctx.send(f'**removed song at position {q_pos + 1}:** {song_title}')
+        if q_pos == "all":
+            await Queue_Commands.clear(self, ctx)
+        else:
+            q_pos = int(q_pos) - 1
+            # sanitize the input
+            if q_pos < len(song_queue) and q_pos >= 0:
+                _, song_title, _ = song_queue.pop(q_pos)
+                await ctx.send(f'**removed song at position {q_pos + 1}:** {song_title}')
+    
+    @commands.command(help='Removes all the songs in the queue', usage='', aliases=clear_abbrs)
+    async def clear(self, ctx):
+        global song_queue
+        song_queue = []
+        await ctx.send(f'**removed all the songs in the queue**')
 bot.add_cog(Queue_Commands())
 
 
